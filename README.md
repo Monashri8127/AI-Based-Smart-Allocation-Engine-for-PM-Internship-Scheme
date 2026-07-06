@@ -28,7 +28,7 @@ Before running this project locally, ensure you have the following installed:
 The application features a **Self-Service Interactive Demo Mode** allowing visitors to evaluate the rule-based matchmaking matrix using their own profile details in real-time without uploading files.
 
 ### How to Test Your Own Allocation:
-1. **Access the Live Web Application:** Click the link provided in the repo description to open the portal.
+1. **Access the Live Web Application:** Go directly to https://pm-internship-scheme.streamlit.app to open the portal.
 2. **Switch Evaluation Modes:** In **Step 1: Database Ingestion**, toggle the radio option from *“Use Dataset Simulation Profiles”* to **“Create My Custom Profile”**.
 3. **Configure Your Parameters:** * Input your custom **Full Name**.
    * Adjust the slider to set your **Academic Score (%)**.
