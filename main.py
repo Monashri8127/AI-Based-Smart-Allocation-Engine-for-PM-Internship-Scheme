@@ -31,7 +31,7 @@ algorithm_choice = st.sidebar.selectbox(
 
 enforce_reservation = st.sidebar.checkbox("Enforce Regulatory Quotas (SC/ST/OBC/PwD)", value=True)
 st.sidebar.markdown("---")
-st.sidebar.info("💡 **Tip:** Upload your applicant database and corporate vacancies on the right to execute the logic matrix.")
+st.sidebar.info("💡 **Tip:** Upload databases or select Custom Profile mode on the right to test out the logic live.")
 
 # --- MOCK DATA GENERATOR FOR SIMULATION ---
 def generate_mock_data():
@@ -50,37 +50,66 @@ def generate_mock_data():
     })
     return candidates, companies
 
-# --- MAIN INTERFACE: FILE UPLOADS ---
+# --- MAIN INTERFACE: DATABASE INGESTION SECTION ---
 st.markdown('<div class="section-header">📁 Step 1: Database Ingestion</div>', unsafe_allow_html=True)
-col1, col2 = st.columns(2)
 
-with col1:
-    candidate_file = st.file_uploader("Upload Applicant Database (Excel/CSV)", type=["csv", "xlsx"])
-with col2:
-    company_file = st.file_uploader("Upload Corporate Vacancies (Excel/CSV)", type=["csv", "xlsx"])
+# Interactive Evaluation Selection
+demo_mode = st.radio("Select Evaluation Mode:", ["Use Dataset Simulation Profiles", "Create My Custom Profile (Test Your Own Selection)"])
 
-# Data Loading Logic
-if candidate_file is not None and company_file is not None:
-    try:
-        if candidate_file.name.endswith('.csv'):
-            df_candidates = pd.read_csv(candidate_file)
-        else:
-            df_candidates = pd.read_excel(candidate_file)
-            
-        if company_file.name.endswith('.csv'):
-            df_companies = pd.read_csv(company_file)
-        else:
-            df_companies = pd.read_excel(company_file)
-            
-        st.success("✅ Both databases parsed and synchronized successfully!")
-        data_ready = True
-    except Exception as e:
-        st.error(f"Error parsing uploaded files: {e}")
-        data_ready = False
+# Load baseline layout structures
+df_candidates, df_companies = generate_mock_data()
+data_ready = True
+
+if demo_mode == "Create My Custom Profile (Test Your Own Selection)":
+    st.info("💡 Enter your personal parameters below to insert your profile into the operational matching queue array.")
+    
+    uc1, uc2, uc3, uc4 = st.columns(4)
+    with uc1:
+        user_name = st.text_input("Full Name:", value="Guest Applicant")
+    with uc2:
+        user_score = st.slider("Academic Score (%):", min_value=50.0, max_value=100.0, value=85.0, step=0.5)
+    with uc3:
+        user_category = st.selectbox("Category Grouping:", ["General", "OBC", "SC", "ST", "General-PwD"])
+    with uc4:
+        user_domain = st.selectbox("Target Sector Domain:", ["IT/Software", "Banking/Finance", "Manufacturing", "Data Analytics"])
+        
+    # Inject user's row at the top of the processing queue
+    custom_profile_row = pd.DataFrame({
+        "Applicant ID": ["PM-2026-USER"],
+        "Full Name": [user_name],
+        "Academic Score (%)": [user_score],
+        "Category": [user_category],
+        "Preferred Domain": [user_domain]
+    })
+    df_candidates = pd.concat([custom_profile_row, df_candidates], ignore_index=True)
+    st.success(f"🎉 Custom dataset record generated for '{user_name}'! Scroll to Step 2 and run the pipeline to see your result.")
+
 else:
-    st.warning("📊 No files uploaded yet. The engine will run a pre-loaded structural simulation using standard test patterns below.")
-    df_candidates, df_companies = generate_mock_data()
-    data_ready = True
+    # Standard original upload configuration handles fallback
+    col1, col2 = st.columns(2)
+    with col1:
+        candidate_file = st.file_uploader("Upload Applicant Database (Excel/CSV)", type=["csv", "xlsx"])
+    with col2:
+        company_file = st.file_uploader("Upload Corporate Vacancies (Excel/CSV)", type=["csv", "xlsx"])
+
+    if candidate_file is not None and company_file is not None:
+        try:
+            if candidate_file.name.endswith('.csv'):
+                df_candidates = pd.read_csv(candidate_file)
+            else:
+                df_candidates = pd.read_excel(candidate_file)
+                
+            if company_file.name.endswith('.csv'):
+                df_companies = pd.read_csv(company_file)
+            else:
+                df_companies = pd.read_excel(company_file)
+                
+            st.success("✅ Both databases parsed and synchronized successfully!")
+        except Exception as e:
+            st.error(f"Error parsing uploaded files: {e}")
+            data_ready = False
+    else:
+        st.warning("📊 Operating on system-loaded testing simulation metrics profiles.")
 
 # Displaying Source Data Preview
 with st.expander("🔍 View Raw Source Datasets Summary"):
@@ -184,6 +213,5 @@ if st.button("Run Allocation Pipeline", type="primary"):
                 st.write("**Placement Performance Grouped by Candidate Demographics**")
                 chart_data = df_sorted_candidates.groupby(["Category", "Allocation Status"]).size().unstack(fill_value=0)
                 st.bar_chart(chart_data)
-                
     else:
-        st.error("System error: Unable to compute logic matrix due to structural layout failures.")
+        st.error("Error running application core algorithms pipeline.")
